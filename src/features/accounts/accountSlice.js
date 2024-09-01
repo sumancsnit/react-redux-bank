@@ -10,6 +10,7 @@ const accountReducer = (state = initialStateAccount, action) => {
       return {
         ...state,
         balance: state.balance + action.payload,
+        isLoading: true,
       };
     case 'account/withdraw':
       return {
@@ -32,13 +33,39 @@ const accountReducer = (state = initialStateAccount, action) => {
         loanPurpose: '',
         balance: state.balance - state.loan,
       };
+    case 'account/convertingCurrency':
+      return {
+        ...state,
+        isLoading: true,
+      };
     default:
       return state;
   }
 };
 
-const deposit = (amount) => {
-  return { type: 'account/deposit', payload: amount };
+const deposit = (amount, currency) => {
+  if (currency === 'USD') return { type: 'account/deposit', payload: amount };
+  // if function is returned instead of {}, redux will use thunk middleware
+  // dispatch and getState will be accessable in this fn
+  return async (dispatch, getState) => {
+    // first dispatch to show loader
+    dispatch({ type: 'account/convertingCurrency' });
+    // API Call
+    try {
+      const res = await fetch(
+        `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`
+      );
+      const data = await res.json();
+      const converted = data.rates.USD;
+      // second dispatch to load actual data from api
+      dispatch({ type: 'account/deposit', payload: converted });
+      console.log('🚀 ~ return ~ data:', converted);
+    } catch (error) {
+      console.log('currency api error:', error);
+    }
+
+    // Return action
+  };
 };
 
 const withdraw = (amount) => {
