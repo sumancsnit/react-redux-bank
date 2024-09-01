@@ -1,12 +1,18 @@
-import { createStore } from 'redux';
+import { combineReducers, createStore } from 'redux';
 
-const initialStore = {
+const initialStateAccount = {
   balance: 0,
   loan: 0,
   loanPurpose: '',
 };
 
-const reducer = (state = initialStore, action) => {
+const initialStateCustomer = {
+  fullName: '',
+  nationalID: '',
+  createdAt: '',
+};
+
+const accountReducer = (state = initialStateAccount, action) => {
   switch (action.type) {
     case 'account/deposite':
       return {
@@ -39,25 +45,73 @@ const reducer = (state = initialStore, action) => {
   }
 };
 
-const store = createStore(reducer);
+const customerReducer = (state = initialStateCustomer, action) => {
+  switch (action.type) {
+    case 'customer/createCustomer':
+      return {
+        ...state,
+        fullName: action.payLoad.fullName,
+        nationalID: action.payLoad.nationalID,
+        createdAt: action.payLoad.createdAt,
+      };
+    case 'customer/updateName':
+      return {
+        ...state,
+        fullName: action.payLoad,
+      };
+    default:
+      return state;
+  }
+};
 
-store.dispatch({ type: 'account/deposite', payLoad: 500 });
-
-console.log('hello redux', store.getState());
-
-store.dispatch({ type: 'account/withdraw', payLoad: 200 });
-
-console.log('hello redux', store.getState());
-
-store.dispatch({
-  type: 'account/requestLoan',
-  payLoad: { amount: 1000, purpose: 'buy a car' },
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer,
 });
 
-console.log('hello redux', store.getState());
+const store = createStore(rootReducer);
 
-store.dispatch({
-  type: 'account/payLoan',
-});
+const deposit = (amount) => {
+  return { type: 'account/deposite', payLoad: amount };
+};
+
+const withdraw = (amount) => {
+  return { type: 'account/withdraw', payLoad: amount };
+};
+
+const requestLoan = (amount, purpose) => {
+  return {
+    type: 'account/requestLoan',
+    payLoad: { amount, purpose },
+  };
+};
+
+const payLoan = () => {
+  return {
+    type: 'account/payLoan',
+  };
+};
+
+store.dispatch(deposit(750));
+store.dispatch(withdraw(250));
+store.dispatch(requestLoan(1000, 'buy a car'));
+store.dispatch(payLoan());
+
+const createCustomer = (fullName, nationalID) => {
+  return {
+    type: 'customer/createCustomer',
+    payLoad: { fullName, nationalID, createdAt: new Date().toISOString() },
+  };
+};
+
+const updateName = (fullName) => {
+  return {
+    type: 'customer/updateName',
+    payLoad: fullName,
+  };
+};
+
+store.dispatch(createCustomer('Veda S', 25425175844));
+store.dispatch(updateName('Vedansh Suman'));
 
 console.log('hello redux', store.getState());
