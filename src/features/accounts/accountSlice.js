@@ -10,7 +10,7 @@ const accountReducer = (state = initialStateAccount, action) => {
       return {
         ...state,
         balance: state.balance + action.payload,
-        isLoading: true,
+        isLoading: false,
       };
     case 'account/withdraw':
       return {
@@ -59,7 +59,6 @@ const deposit = (amount, currency) => {
       const converted = data.rates.USD;
       // second dispatch to load actual data from api
       dispatch({ type: 'account/deposit', payload: converted });
-      console.log('🚀 ~ return ~ data:', converted);
     } catch (error) {
       console.log('currency api error:', error);
     }
