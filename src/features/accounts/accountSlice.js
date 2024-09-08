@@ -14,6 +14,7 @@ const accountSlice = createSlice({
     // replacement of action.type 'account/deposit'
     deposit: (state, action) => {
       state.balance += action.payload;
+      state.isLoading = false;
     },
     withdraw(state, action) {
       state.balance -= action.payload;
@@ -36,10 +37,36 @@ const accountSlice = createSlice({
       state.loan = 0;
       state.loanPurpose = '';
     },
+    convertingCurrency: (state) => {
+      state.isLoading = true;
+    },
   },
 });
 
-export default accountSlice.reducer;
+// there is another way to use async calls in RTK
+export const deposit = (amount, currency) => {
+  if (currency === 'USD') return { type: 'account/deposit', payload: amount };
+  // if function is returned instead of {}, redux will use thunk middleware
+  // dispatch and getState will be accessable in this fn
+  return async (dispatch, getState) => {
+    // first dispatch to show loader
+    dispatch({ type: 'account/convertingCurrency' });
+    // API Call
+    try {
+      const res = await fetch(
+        `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`
+      );
+      const data = await res.json();
+      const converted = data.rates.USD;
+      // second dispatch to load actual data from api
+      dispatch({ type: 'account/deposit', payload: converted });
+    } catch (error) {
+      console.log('currency api error:', error);
+    }
 
-export const { deposit, withdraw, requestLoan, payLoan } =
-  accountSlice.actions || {};
+    // Return action
+  };
+};
+
+export default accountSlice.reducer;
+export const { withdraw, requestLoan, payLoan } = accountSlice.actions;
